@@ -1,0 +1,37 @@
+#!/usr/bin/expect -f
+
+set timeout 10
+set arg1 [lindex $argv 0]
+set arg2 [lindex $argv 1]
+set arg3 [lindex $argv 2]
+set arg4 [lindex $argv 3]
+spawn telnet $arg2 25
+expect {
+	"Trying*" { send "HELO $arg1\r" }
+	timeout { exit 1 }
+	}
+expect {
+	"250*" { send "mail from:$arg4\r" }
+	"*Connection refused*" { exit 1 }
+	timeout { exit 1 }
+	}		
+expect "250*"
+
+set inputFile [open $arg3 r] 
+set outputFile [open BounceEmail.txt a]
+while {-1 != [gets $inputFile line]} {
+send "rcpt to:$line\r"
+expect {
+	"250*" {}
+	"550*" { puts $outputFile $line }
+	"452*" { 
+		send "RSET\r"
+		expect {
+        		"250*" { send "mail from:$arg4\r" }
+       		       }
+		expect "250*"	 
+	       }
+	}
+}
+close $outputFile
+send "quit\r"
