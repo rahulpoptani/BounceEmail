@@ -17,7 +17,7 @@ declare -a company=($(cut -d '@' -f 2 $InputFile | tr "[:upper:]" "[:lower:]" | 
 	for x in "${company[@]}"
 	do
 		grep "@$x" $InputFile > split/$x.list
-		declare -a MX=($(dig $x mx +short $1 | cut -d ' ' -f2))
+		declare -a MX=($(nslookup -q=mx $x | cut -d ' ' -f5 | grep ".com."))
 		a=1
 		mxPosLen=$(expr ${#MX[@]})
 		mxPos=0
